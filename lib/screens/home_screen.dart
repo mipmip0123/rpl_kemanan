@@ -1,7 +1,11 @@
+// ========================================================
+// [LATIHAN 1]: INTEGRASI NAVIGASI DI HOME SCREEN
+// ========================================================
 import 'package:flutter/material.dart';
+
 import 'package:rpl_keamanan2/services/secure_storage_service.dart';
 import 'package:rpl_keamanan2/screens/user_list_screen.dart';
-import 'package:rpl_keamanan2/screens/post_list_screen.dart';
+import 'package:rpl_keamanan2/screens/post_list_screen.dart'; // Import halaman Latihan 1
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,7 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _saveToken() async {
     if (_tokenController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Token tidak boleh kosong'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Token tidak boleh kosong'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -48,7 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
     await _checkToken();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Token berhasil disimpan di secure storage'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Token berhasil disimpan di secure storage'),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
@@ -58,7 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
     await _checkToken();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Token berhasil dihapus'), backgroundColor: Colors.orange),
+        const SnackBar(
+          content: Text('Token berhasil dihapus'),
+          backgroundColor: Colors.orange,
+        ),
       );
     }
   }
@@ -77,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Section 1: Secure Storage
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -87,11 +101,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(Icons.lock, color: Colors.deepPurple),
                           SizedBox(width: 8),
-                          Text('Secure Storage', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'Secure Storage',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text('Simpan token atau PIN di secure storage (terenkripsi AES).', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const Text(
+                        'Simpan token atau PIN di secure storage (terenkripsi AES).',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       const SizedBox(height: 16),
                       TextField(
                         controller: _tokenController,
@@ -110,7 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: _saveToken,
                               icon: const Icon(Icons.save),
                               label: const Text('Simpan'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -124,23 +150,37 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // PERBAIKAN: Kontras warna kontainer status agar teks peringatan terbaca sempurna
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _hasToken ? Colors.green : Colors.red,
+                          color: _hasToken
+                              ? Colors.green[50]
+                              : Colors
+                                    .red[50], // Menggunakan warna pastel lembut
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _hasToken ? Colors.green : Colors.red),
+                          border: Border.all(
+                            color: _hasToken ? Colors.green : Colors.red,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(_hasToken ? Icons.check_circle : Icons.cancel, color: _hasToken ? Colors.green : Colors.red),
+                            Icon(
+                              _hasToken ? Icons.check_circle : Icons.cancel,
+                              color: _hasToken ? Colors.green : Colors.red,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _hasToken
                                     ? 'Token tersimpan: ${_savedToken!.substring(0, _savedToken!.length > 10 ? 10 : _savedToken!.length)}...'
                                     : 'Belum ada token tersimpan',
-                                style: TextStyle(color: _hasToken ? Colors.green : Colors.red, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: _hasToken
+                                      ? Colors.green[800]
+                                      : Colors.red[800], // Menggunakan warna teks kontras agar terbaca
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
@@ -151,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Section 2: HTTP Request
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -161,33 +202,65 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(Icons.cloud, color: Colors.blue),
                           SizedBox(width: 8),
-                          Text('HTTP Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            'HTTP Request',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text('Ambil data dari REST API (JSONPlaceholder) menggunakan GET request.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const Text(
+                        'Ambil data dari REST API (JSONPlaceholder) menggunakan GET request.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const UserListScreen()));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UserListScreen(),
+                              ),
+                            );
                           },
                           icon: const Icon(Icons.list),
                           label: const Text('Lihat Daftar Pengguna'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
+                      // ----------------------------------------------------
+                      // TOMBOL TAMBAHAN [LATIHAN 1]: LIHAT DAFTAR POSTINGAN
+                      // ----------------------------------------------------
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const PostListScreen()));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PostListScreen(),
+                              ),
+                            );
                           },
                           icon: const Icon(Icons.post_add),
-                          label: const Text('Lihat Daftar Postingan (Latihan 1)'),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16)),
+                          label: const Text(
+                            'Lihat Daftar Postingan (Latihan 1)',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                         ),
                       ),
                     ],
