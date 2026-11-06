@@ -1,49 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:rpl_keamanan2/config/dependency_injector.dart';
+import 'package:rpl_keamanan2/models/user.dart';
+import 'package:rpl_keamanan2/repositories/user_repository.dart';
+import 'package:rpl_keamanan2/widgets/user_card.dart';
 
-import '../models/user.dart';
-import '../repositories/user_repository.dart';
-import '../repositories/user_repository_impl.dart';
-import '../widgets/user_card.dart';
-
-/// Halaman untuk menampilkan daftar pengguna.
-///
-/// Halaman ini menggunakan [UserRepository] untuk mengambil data,
-/// sehingga UI tidak bergantung langsung pada [ApiService].
 class UserListScreen extends StatefulWidget {
-  final UserRepository? repository;
-  const UserListScreen({super.key, this.repository});
+  const UserListScreen({super.key});
   @override
   State<UserListScreen> createState() => _UserListScreenState();
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  late final UserRepository _repository;
+  late UserRepository _repository;
   List<User> _users = [];
   bool _isLoading = true;
   String? _errorMessage;
+
   @override
-  void initState() {
-    super.initState();
-    _repository = widget.repository ?? UserRepositoryImpl();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _repository = DependencyInjector.of(context).userRepository;
     _loadUsers();
   }
 
   Future<void> _loadUsers() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
       final users = await _repository.getUsers();
-      setState(() {
-        _users = users;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _users = users;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -55,11 +55,7 @@ class _UserListScreenState extends State<UserListScreen> {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadUsers,
-            tooltip: 'Muat ulang',
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadUsers),
         ],
       ),
       body: _buildBody(),
@@ -67,51 +63,10 @@ class _UserListScreenState extends State<UserListScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Memuat data...'),
-          ],
-        ),
-      );
-    }
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              const Text(
-                'Terjadi Kesalahan',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _loadUsers,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    if (_users.isEmpty) {
-      return const Center(child: Text('Tidak ada data pengguna'));
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_errorMessage != null) return Center(child: Text(_errorMessage!));
+    if (_users.isEmpty) return const Center(child: Text('Tidak ada data pengguna'));
+    
     return RefreshIndicator(
       onRefresh: _loadUsers,
       child: ListView.builder(
@@ -133,25 +88,13 @@ class _UserListScreenState extends State<UserListScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              user.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            Text(user.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Username: ${user.username}'),
             Text('Email: ${user.email}'),
             Text('Telepon: ${user.phone}'),
             Text('Website: ${user.website}'),
             Text('Perusahaan: ${user.companyName}'),
-
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Tutup'),
-              ),
-            ),
           ],
         ),
       ),
