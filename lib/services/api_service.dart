@@ -35,8 +35,9 @@ class ApiService {
       throw Exception('Tidak ada koneksi internet. Periksa jaringan Anda.');
     } on FormatException {
       throw Exception('Format data tidak valid.');
-    } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+    } catch (e, stackTrace) {
+      Logger.error('Error occurred: /users', e, stackTrace);
+      throw Exception('Terjadi kesalahan pada sistem. Silakan coba lagi nanti.');
     }
   }
 

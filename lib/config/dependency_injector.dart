@@ -13,12 +13,30 @@ class DependencyInjector extends InheritedWidget {
   final UserRepository userRepository;
   final PostRepository postRepository;
 
-  DependencyInjector({
+  //[PERBAIKAN ARSITEKTUR]: Membuat static factory method untuk membuat instance ApiService terlebih dahulu
+  factory DependencyInjector({
+    Key? key,
+    required Widget child,
+  }) {
+    final sharedApiService = ApiService(); // ✅ Membuat 1 objek ApiService (Shared Resource)
+    
+    return DependencyInjector._internal(
+      key: key,
+      child: child,
+      apiService: sharedApiService,
+      userRepository: UserRepositoryImpl(apiService: sharedApiService), // ✅ Memakai objek yang sama
+      postRepository: PostRepositoryImpl(apiService: sharedApiService), // ✅ Memakai objek yang sama
+    );
+  }
+
+  // Konstruktor internal untuk menetapkan nilai ke variabel final
+  const DependencyInjector._internal({
     super.key,
     required super.child,
-  })  : apiService = ApiService(),
-        userRepository = UserRepositoryImpl(apiService: ApiService()),
-        postRepository = PostRepositoryImpl(apiService: ApiService());
+    required this.apiService,
+    required this.userRepository,
+    required this.postRepository,
+  });
 
   static DependencyInjector of(BuildContext context) {
     final DependencyInjector? result =

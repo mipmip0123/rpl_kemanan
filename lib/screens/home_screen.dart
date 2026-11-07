@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:rpl_keamanan2/services/secure_storage_service.dart';
 import 'package:rpl_keamanan2/screens/user_list_screen.dart';
 import 'package:rpl_keamanan2/screens/post_list_screen.dart'; // Import halaman Latihan 1
+//[MODIFIKASI ISSUES]: Import kelas Validators agar bisa memanggil logika validasi input
+import 'package:rpl_keamanan2/utils/validators.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +18,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final SecureStorageService _storageService = SecureStorageService();
   final TextEditingController _tokenController = TextEditingController();
+
+  //[MODIFIKASI ISSUES]: Menambahkan GlobalKey untuk melacak status validasi Form
+  final _formKey = GlobalKey<FormState>();
+
   String? _savedToken;
   bool _hasToken = false;
 
@@ -41,25 +47,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _saveToken() async {
-    if (_tokenController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token tidak boleh kosong'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    await _storageService.saveToken(_tokenController.text.trim());
-    _tokenController.clear();
-    await _checkToken();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token berhasil disimpan di secure storage'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    //[MODIFIKASI ISSUES]: Mengubah pengecekan manual string menjadi validasi Form terpusat
+    if (_formKey.currentState?.validate() ?? false) {
+      // Jika semua TextFormField di dalam Form lolos validasi, data baru disimpan
+      await _storageService.saveToken(_tokenController.text.trim());
+      _tokenController.clear();
+      await _checkToken();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Token berhasil disimpan di secure storage'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -94,99 +95,109 @@ class _HomeScreenState extends State<HomeScreen> {
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.lock, color: Colors.deepPurple),
-                          SizedBox(width: 8),
-                          Text(
-                            'Secure Storage',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Simpan token atau PIN di secure storage (terenkripsi AES).',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _tokenController,
-                        decoration: const InputDecoration(
-                          labelText: 'Token',
-                          hintText: 'Masukkan token dummy',
-                          prefixIcon: Icon(Icons.vpn_key),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _saveToken,
-                              icon: const Icon(Icons.save),
-                              label: const Text('Simpan'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _hasToken ? _deleteToken : null,
-                              icon: const Icon(Icons.delete),
-                              label: const Text('Hapus'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // PERBAIKAN: Kontras warna kontainer status agar teks peringatan terbaca sempurna
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _hasToken
-                              ? Colors.green[50]
-                              : Colors
-                                    .red[50], // Menggunakan warna pastel lembut
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _hasToken ? Colors.green : Colors.red,
-                          ),
-                        ),
-                        child: Row(
+                  //[MODIFIKASI ISSUES]: Membungkus Column input dengan widget Form agar validasi berfungsi
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
                           children: [
-                            Icon(
-                              _hasToken ? Icons.check_circle : Icons.cancel,
-                              color: _hasToken ? Colors.green : Colors.red,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _hasToken
-                                    ? 'Token tersimpan: ${_savedToken!.substring(0, _savedToken!.length > 10 ? 10 : _savedToken!.length)}...'
-                                    : 'Belum ada token tersimpan',
-                                style: TextStyle(
-                                  color: _hasToken
-                                      ? Colors.green[800]
-                                      : Colors.red[800], // Menggunakan warna teks kontras agar terbaca
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Icon(Icons.lock, color: Colors.deepPurple),
+                            SizedBox(width: 8),
+                            Text(
+                              'Secure Storage',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Simpan token atau PIN di secure storage (terenkripsi AES).',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _tokenController,
+                          decoration: const InputDecoration(
+                            labelText: 'Token',
+                            hintText: 'Masukkan token dummy',
+                            prefixIcon: Icon(Icons.vpn_key),
+                            border: OutlineInputBorder(),
+                          ),
+                          //[MODIFIKASI ISSUES]: Mengimplementasikan properti validator dengan memanggil fungsi utilitas Validators
+                          validator: (value) {
+                            return Validators.validateText(
+                              value,
+                              fieldName: 'Token',
+                              minLength: 8, // Batas minimal panjang token demi aspek keamanan
+                              maxLength: 100,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _saveToken,
+                                icon: const Icon(Icons.save),
+                                label: const Text('Simpan'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _hasToken ? _deleteToken : null,
+                                icon: const Icon(Icons.delete),
+                                label: const Text('Hapus'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // PERBAIKAN: Kontras warna kontainer status agar teks peringatan terbaca sempurna
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _hasToken ? Colors.green[50] : Colors.red[50], // Menggunakan warna pastel lembut
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: _hasToken ? Colors.green : Colors.red,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _hasToken ? Icons.check_circle : Icons.cancel,
+                                color: _hasToken ? Colors.green : Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _hasToken
+                                      ? 'Token tersimpan: ${_savedToken!.substring(0, _savedToken!.length > 10 ? 10 : _savedToken!.length)}...'
+                                      : 'Belum ada token tersimpan',
+                                  style: TextStyle(
+                                    color: _hasToken
+                                        ? Colors.green[800]
+                                        : Colors.red[800], // Menggunakan warna teks kontras agar terbaca
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
